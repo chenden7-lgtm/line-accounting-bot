@@ -21,45 +21,44 @@ def init_db():
 
 init_db()
 
-def render_page(current_type, names, totals, records=None, flow=None, top_expenses=None):
+def render_page(current_type, names, totals, records=None):
     total_val = totals.get(current_type, sum(totals.values()))
     
-    # 底部導覽列
-    nav = f"""<div style="position:fixed;bottom:0;left:0;right:0;background:white;display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid #efefef;padding:10px 0 env(safe-area-inset-bottom);height:80px;z-index:999;text-align:center;">
-        <a href="/?type=summary" style="text-decoration:none;color:{'#ff5722' if current_type=='summary' else '#ccc'};"><span>📊</span><br><small>統整</small></a>
-        <a href="/?type=personal" style="text-decoration:none;color:{'#ff5722' if current_type=='personal' else '#ccc'};"><span>🏠</span><br><small>{names['personal'][:2]}</small></a>
-        <a href="/?type=company" style="text-decoration:none;color:{'#ff5722' if current_type=='company' else '#ccc'};"><span>🏢</span><br><small>{names['company'][:2]}</small></a>
-        <a href="/?type=invest" style="text-decoration:none;color:{'#ff5722' if current_type=='invest' else '#ccc'};"><span>💰</span><br><small>{names['invest'][:2]}</small></a>
-        <a href="/?type=report" style="text-decoration:none;color:{'#ff5722' if current_type=='report' else '#ccc'};"><span>📈</span><br><small>報表</small></a>
-        <a href="/?type=settings" style="text-decoration:none;color:{'#ff5722' if current_type=='settings' else '#ccc'};"><span>⚙️</span><br><small>設定</small></a>
+    # 底部導覽列精修
+    nav = f"""<div style="position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,0.98);display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid #f0f0f0;padding:8px 0 env(safe-area-inset-bottom);height:75px;z-index:999;text-align:center;">
+        <a href="/?type=summary" style="text-decoration:none;color:{'#ff5722' if current_type=='summary' else '#ccc'};"><span>📊</span><br><small style="font-size:0.6rem;font-weight:bold;">統整</small></a>
+        <a href="/?type=personal" style="text-decoration:none;color:{'#ff5722' if current_type=='personal' else '#ccc'};"><span>🏠</span><br><small style="font-size:0.6rem;font-weight:bold;">{names['personal'][:2]}</small></a>
+        <a href="/?type=company" style="text-decoration:none;color:{'#ff5722' if current_type=='company' else '#ccc'};"><span>🏢</span><br><small style="font-size:0.6rem;font-weight:bold;">{names['company'][:2]}</small></a>
+        <a href="/?type=invest" style="text-decoration:none;color:{'#ff5722' if current_type=='invest' else '#ccc'};"><span>💰</span><br><small style="font-size:0.6rem;font-weight:bold;">{names['invest'][:2]}</small></a>
+        <a href="/?type=report" style="text-decoration:none;color:{'#ff5722' if current_type=='report' else '#ccc'};"><span>📈</span><br><small style="font-size:0.6rem;font-weight:bold;">報表</small></a>
+        <a href="/?type=settings" style="text-decoration:none;color:{'#ff5722' if current_type=='settings' else '#ccc'};"><span>⚙️</span><br><small style="font-size:0.6rem;font-weight:bold;">設定</small></a>
     </div>"""
 
-    header = f'<div style="background:#121212;color:white;padding:45px 20px 60px;text-align:center;border-radius:0 0(35px);position:relative;"><small style="opacity:0.6;font-weight:bold;">{names.get(current_type, "全域資產")}</small><h1 style="font-weight:bold;margin-top:5px;font-size:2.5rem;">$ {total_val}</h1></div>'
+    header = f'<div style="background:linear-gradient(135deg, #222 0%, #000 100%);color:white;padding:35px 20px 55px;text-align:center;border-radius:0 0 30px 30px;"><small style="opacity:0.6;letter-spacing:1px;">{names.get(current_type, "資產總額")}</small><h1 style="font-weight:800;margin-top:8px;font-size:2.2rem;">$ {total_val}</h1></div>'
     
-    content = ""
+    body_content = ""
     if current_type == "summary":
         for t in ['personal', 'company', 'invest']:
-            content += f'<div style="background:white;margin:15px;padding:20px;border-radius:20px;display:flex;justify-content:space-between;box-shadow:0 4px 15px rgba(0,0,0,0.04);"><b>{names[t]}</b><span style="font-weight:bold;color:#333;">$ {totals[t]}</span></div>'
+            body_content += f'<div style="background:white;margin:12px 15px;padding:18px;border-radius:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 15px rgba(0,0,0,0.03); border:1px solid #f9f9f9;"><b>{names[t]}</b><span style="font-weight:bold;color:#ff5722;font-size:1.1rem;">$ {totals[t]}</span></div>'
     elif current_type == "settings":
-        content = f'<div style="padding:20px;"><form action="/update_settings" method="POST" style="background:white;padding:30px;border-radius:25px;box-shadow:0 10px 30px rgba(0,0,0,0.05);">'
-        content += f'<label style="color:#888;font-size:0.8rem;font-weight:bold;">帳本1: {names["personal"]}</label><input name="n1" class="form-control mb-3" style="border-radius:12px;padding:12px;" value="{names["personal"]}">'
-        content += f'<label style="color:#888;font-size:0.8rem;font-weight:bold;">帳本2: {names["company"]}</label><input name="n2" class="form-control mb-3" style="border-radius:12px;padding:12px;" value="{names["company"]}">'
-        content += f'<label style="color:#888;font-size:0.8rem;font-weight:bold;">帳本3: {names["invest"]}</label><input name="n3" class="form-control mb-3" style="border-radius:12px;padding:12px;" value="{names["invest"]}">'
-        content += '<button class="btn btn-dark w-100 py-3 fw-bold" style="border-radius:15px;">儲存修改內容</button></form></div>'
+        body_content = f'<div style="padding:15px;"><div style="background:white;padding:25px;border-radius:25px;box-shadow:0 10px 30px rgba(0,0,0,0.05); border:1px solid #fff;"><form action="/update_settings" method="POST">'
+        for k, v in [('n1', names['personal']), ('n2', names['company']), ('n3', names['invest'])]:
+            body_content += f'<label style="color:#999;font-size:0.75rem;font-weight:bold;margin-left:5px;">帳本名稱</label><input name="{k}" class="form-control mb-3" style="border-radius:12px;padding:12px;border:2px solid #f1f3f6;font-weight:bold;" value="{v}">'
+        body_content += '<button class="btn btn-dark w-100 py-3 mt-2" style="border-radius:15px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,0.1);">儲存設定</button></form></div></div>'
     else:
-        content = f'<div style="background:white;margin:-30px 15px 20px;padding:25px;border-radius:25px;box-shadow:0 15px 30px rgba(0,0,0,0.08);position:relative;z-index:10;"><form action="/add" method="POST">'
-        content += f'<input type="hidden" name="account_type" value="{current_type}">'
-        content += '<select name="entry_type" style="background:#f1f3f6;border:none;border-radius:12px;padding:10px;width:100%;font-weight:bold;text-align:center;margin-bottom:15px;"><option value="expense">支出 💸</option><option value="income">收入 💰</option></select>'
-        content += '<div style="display:flex;gap:10px;"><input type="number" name="amount" class="form-control" style="border-radius:10px;padding:12px;" placeholder="金額" required><input type="text" name="category" class="form-control" style="border-radius:10px;padding:12px;" placeholder="項目" required></div>'
-        content += '<button class="btn w-100 py-3 mt-3 fw-bold text-white shadow-sm" style="background:#ff5722;border-radius:15px;">確認存入</button></form></div>'
+        body_content = f'<div style="background:white;margin:-30px 20px 25px;padding:20px;border-radius:25px;box-shadow:0 12px 25px rgba(0,0,0,0.08);position:relative;z-index:10;"><form action="/add" method="POST">'
+        body_content += f'<input type="hidden" name="account_type" value="{current_type}">'
+        body_content += '<div style="display:flex;background:#f1f3f6;border-radius:12px;padding:4px;margin-bottom:15px;"><select name="entry_type" style="background:none;border:none;width:100%;font-weight:bold;text-align:center;color:#555;"><option value="expense">支出 💸</option><option value="income">收入 💰</option></select></div>'
+        body_content += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><input type="number" name="amount" class="form-control" style="border-radius:10px;padding:12px;border:1px solid #eee;" placeholder="金額" required><input type="text" name="category" class="form-control" style="border-radius:10px;padding:12px;border:1px solid #eee;" placeholder="項目" required></div>'
+        body_content += '<button class="btn w-100 py-3 mt-3 fw-bold text-white" style="background:#ff5722;border-radius:15px;">存入紀錄</button></form></div>'
         if records:
             for r in records:
                 color = "#28a745" if r['entry_type'] == 'income' else "#dc3545"
                 symbol = "+" if r['entry_type'] == 'income' else "-"
-                content += f'<div style="background:white;margin:0 15px 12px;padding:18px;border-radius:18px;display:flex;justify-content:space-between;align-items:center;"><div><b style="font-size:1rem;">{r["category"]}</b><br><small style="color:#aaa;font-size:0.7rem;">{r["created_at"]}</small></div><div style="display:flex;align-items:center;"><b style="color:{color};font-size:1.1rem;">{symbol}$ {r["amount"]}</b><form action="/delete/{r["id"]}?type={current_type}" method="POST" style="margin-left:15px;"><button style="border:none;background:none;color:#ddd;font-size:1.4rem;">&times;</button></form></div></div>'
+                body_content += f'<div style="background:white;margin:0 20px 10px;padding:15px;border-radius:15px;display:flex;justify-content:space-between;align-items:center;border:1px solid #f0f0f0;"><div><b style="font-size:0.95rem;">{r["category"]}</b><br><small style="color:#bbb;font-size:0.65rem;">{r["created_at"]}</small></div><div style="display:flex;align-items:center;"><b style="color:{color};font-size:1.05rem;">{symbol}$ {r["amount"]}</b><form action="/delete/{r["id"]}?type={current_type}" method="POST" style="margin-left:12px;"><button style="border:none;background:none;color:#eee;font-size:1.4rem;">&times;</button></form></div></div>'
 
-    full_html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{{background:#f7f9fc;font-family:sans-serif;padding-bottom:100px;}}.nav-i span{{font-size:1.4rem;display:block;margin-bottom:2px;}}</style></head><body>{header}{content}{nav}</body></html>"""
-    return full_html
+    final_html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{{background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding-bottom:120px;}}.nav-i span{{font-size:1.3rem;display:block;margin-bottom:2px;}}</style></head><body>{header}{body_content}{nav}</body></html>"""
+    return final_html
 
 @app.get("/", response_class=HTMLResponse)
 async def index(type: str = "summary"):
@@ -76,7 +75,6 @@ async def index(type: str = "summary"):
     else:
         records = conn.execute("SELECT * FROM records WHERE account_type=? ORDER BY created_at DESC LIMIT 50", (type,)).fetchall()
         res_html = render_page(type, names, bal, records=records)
-    
     conn.close()
     return res_html
 
