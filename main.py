@@ -39,14 +39,13 @@ async def index(request: Request, type: str = "personal"):
         total = res[0] if res and res[0] else 0
         conn.close()
         
-        # 使用最原始的 context 建構方式，確保不論 FastAPI 版本都能跑
+        # 修正：針對最新版 FastAPI/Starlette，request 必須是第一個參數
         context = {
-            "request": request,
             "current_type": type,
             "records": records,
             "total": total
         }
-        return templates.TemplateResponse("index.html", context)
+        return templates.TemplateResponse(request, "index.html", context)
     except Exception as e:
         import traceback
         error_msg = traceback.format_exc()
