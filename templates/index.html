@@ -7,127 +7,71 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --primary-color: #ff5722; --income-color: #28a745; --expense-color: #dc3545; }
-        body { background-color: #f4f6f9; padding-bottom: 80px; font-family: -apple-system, sans-serif; }
+        body { background-color: #f4f6f9; padding-bottom: 90px; font-family: -apple-system, sans-serif; }
         .header { background: #212529; color: white; padding: 30px 20px 50px; border-radius: 0 0 30px 30px; position: relative; }
         .card-main { border: none; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); margin-top: -30px; background: white; }
-        .nav-bar { background: white; padding: 12px; box-shadow: 0 -2px 15px rgba(0,0,0,0.05); position: fixed; bottom: 0; width: 100%; z-index: 100; display: flex; }
-        .nav-btn { color: #aaa; text-decoration: none; font-size: 0.75rem; text-align: center; flex: 1; }
-        .nav-btn.active { color: var(--primary-color); font-weight: bold; }
-        
-        /* 收支切換器樣式 */
+        .nav-bar { background: white; padding: 12px; box-shadow: 0 -2px 15px rgba(0,0,0,0.05); position: fixed; bottom: 0; width: 100%; z-index: 100; display: flex; text-align: center; }
+        .nav-link-custom { color: #aaa; text-decoration: none; font-size: 0.7rem; flex: 1; }
+        .nav-link-custom.active { color: var(--primary-color); font-weight: bold; }
         .type-toggle { display: flex; background: #edeff2; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
-        .type-btn { flex: 1; border: none; background: none; padding: 8px; border-radius: 10px; font-weight: bold; font-size: 0.9rem; transition: 0.3s; color: #777; }
+        .type-btn { flex: 1; border: none; background: none; padding: 8px; border-radius: 10px; font-weight: bold; font-size: 0.9rem; color: #777; }
         .type-btn.active-exp { background: white; color: var(--expense-color); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .type-btn.active-inc { background: white; color: var(--income-color); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        
-        .btn-add { width: 100%; border-radius: 12px; padding: 12px; border: none; font-weight: bold; color: white; transition: 0.3s; }
+        .btn-add { width: 100%; border-radius: 12px; padding: 12px; border: none; font-weight: bold; color: white; }
         .bg-exp { background-color: var(--expense-color); }
         .bg-inc { background-color: var(--income-color); }
-        
-        .list-item { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; }
-        .inc-text { color: var(--income-color); }
-        .exp-text { color: var(--expense-color); }
+        .list-item { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
     <div class="header text-center">
-        <a href="/?type=settings" style="position: absolute; top: 15px; right: 20px; color: white; text-decoration: none; font-size: 1.2rem;">⚙️</a>
-        <h6 class="opacity-75 mb-1">{{ names.get(current_type) }} 餘額</h6>
+        <h6 class="opacity-75 mb-1">{{ names.get(current_type) }}</h6>
         <h1 class="fw-bold">$ {{ total }}</h1>
     </div>
-
     <div class="container">
         <div class="card-main p-4 mb-4">
             <form action="/add" method="POST">
                 <input type="hidden" name="account_type" value="{{ current_type }}">
                 <input type="hidden" name="entry_type" id="entry_type_input" value="expense">
-                
                 <div class="type-toggle">
                     <button type="button" id="btn-exp" class="type-btn active-exp" onclick="toggleType('expense')">支出</button>
                     <button type="button" id="btn-inc" class="type-btn" onclick="toggleType('income')">收入</button>
                 </div>
-
                 <div class="row g-2">
-                    <div class="col-6">
-                        <input type="number" name="amount" class="form-control" placeholder="金額" required inputmode="numeric">
-                    </div>
-                    <div class="col-6">
-                        <input type="text" name="category" class="form-control" placeholder="項目" required>
-                    </div>
-                    <div class="col-12 mt-3">
-                        <button type="submit" id="main-submit-btn" class="btn-add bg-exp">存入一筆支出</button>
-                    </div>
+                    <div class="col-6"><input type="number" name="amount" class="form-control" placeholder="金額" required inputmode="numeric"></div>
+                    <div class="col-6"><input type="text" name="category" class="form-control" placeholder="項目" required></div>
+                    <div class="col-12 mt-3"><button type="submit" id="main-submit-btn" class="btn-add bg-exp">存入支出</button></div>
                 </div>
             </form>
         </div>
-
-        <div class="px-1">
-            <h6 class="fw-bold text-muted mb-3">明細紀錄</h6>
-            {% for record in records %}
-            <div class="list-item">
-                <div>
-                    <div class="fw-bold">{{ record.category }}</div>
-                    <small class="text-muted">{{ record.created_at }}</small>
-                </div>
-                <div class="d-flex align-items-center">
-                    <span class="fw-bold me-3 {{ 'inc-text' if record.entry_type == 'income' else 'exp-text' }}">
-                        {{ '+' if record.entry_type == 'income' else '-' }}$ {{ record.amount }}
-                    </span>
-                    <form action="/delete/{{ record.id }}?type={{ current_type }}" method="POST" onsubmit="return confirm('要刪除嗎？')">
-                        <button type="submit" style="background:none; border:none; color:#ddd; font-size:1.2rem;">&times;</button>
-                    </form>
-                </div>
+        {% for record in records %}
+        <div class="list-item">
+            <div><div class="fw-bold">{{ record.category }}</div><small class="text-muted">{{ record.created_at }}</small></div>
+            <div class="d-flex align-items-center">
+                <span class="fw-bold me-3 {{ 'text-success' if record.entry_type == 'income' else 'text-danger' }}">
+                    {{ '+' if record.entry_type == 'income' else '-' }}$ {{ record.amount }}
+                </span>
+                <form action="/delete/{{ record.id }}?type={{ current_type }}" method="POST"><button type="submit" style="background:none; border:none; color:#ddd;">&times;</button></form>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
-
     <div class="nav-bar">
-        <a href="/" class="nav-btn">📊<br>總覽</a>
-        <a href="/?type=personal" class="nav-btn {{ 'active' if current_type == 'personal' }}">🏠<br>{{ names.personal[:2] }}</a>
-        <a href="/?type=company" class="nav-btn {{ 'active' if current_type == 'company' }}">🏢<br>{{ names.company[:2] }}</a>
-        <a href="/?type=invest" class="nav-btn {{ 'active' if current_type == 'invest' }}">💰<br>{{ names.invest[:2] }}</a>
-        <a href="/?type=settings" class="nav-btn">⚙️<br>設定</a>
+        <a href="/" class="nav-link-custom">📊<br>總覽</a>
+        <a href="/?type=personal" class="nav-link-custom {{ 'active' if current_type == 'personal' }}">🏠<br>私人</a>
+        <a href="/?type=company" class="nav-link-custom {{ 'active' if current_type == 'company' }}">🏢<br>公司</a>
+        <a href="/?type=report" class="nav-link-custom">📈<br>報表</a>
+        <a href="/?type=settings" class="nav-link-custom">⚙️<br>設定</a>
     </div>
-
     <script>
         function toggleType(type) {
             const input = document.getElementById('entry_type_input');
-            const btnExp = document.getElementById('btn-exp');
-            const btnInc = document.getElementById('btn-inc');
             const mainBtn = document.getElementById('main-submit-btn');
-            
             input.value = type;
-            if (type === 'expense') {
-                btnExp.classList.add('active-exp');
-                btnInc.classList.remove('active-inc');
-                mainBtn.innerText = '存入一筆支出';
-                mainBtn.classList.add('bg-exp');
-                mainBtn.classList.remove('bg-inc');
-            } else {
-                btnInc.classList.add('active-inc');
-                btnExp.classList.remove('active-exp');
-                mainBtn.innerText = '存入一筆收入';
-                mainBtn.classList.add('bg-inc');
-                mainBtn.classList.remove('bg-exp');
-            }
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        var ctx = document.getElementById("categoryChart")?.getContext("2d");
-        if (ctx) {
-            new Chart(ctx, {
-                type: "doughnut",
-                data: {
-                    labels: [{% for s in stats %}"{{ s.category }}",{% endfor %}],
-                    datasets: [{
-                        data: [{% for s in stats %}{{ s.s }},{% endfor %}],
-                        backgroundColor: ["#ff5722", "#4caf50", "#2196f3", "#ffc107", "#9c27b0", "#00bcd4"]
-                    }]
-                },
-                options: { plugins: { legend: { position: "right", labels: { boxWidth: 12, font: { size: 10 } } } } }
-            });
+            document.getElementById('btn-exp').classList.toggle('active-exp', type === 'expense');
+            document.getElementById('btn-inc').classList.toggle('active-inc', type === 'income');
+            mainBtn.innerText = type === 'expense' ? '存入支出' : '存入收入';
+            mainBtn.className = 'btn-add ' + (type === 'expense' ? 'bg-exp' : 'bg-inc');
         }
     </script>
 </body>
