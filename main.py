@@ -7,7 +7,6 @@ from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
-# 強制獲取當前檔案所在目錄，確保路徑正確
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 DB_PATH = os.path.join(BASE_DIR, "accounting.db")
@@ -39,6 +38,8 @@ async def index(request: Request, type: str = "personal"):
         res = c.fetchone()
         total = res[0] if res and res[0] else 0
         conn.close()
+        
+        # 修正語法：明確傳遞 context 字典
         return templates.TemplateResponse("index.html", {
             "request": request, 
             "current_type": type, 
@@ -46,8 +47,7 @@ async def index(request: Request, type: str = "personal"):
             "total": total
         })
     except Exception as e:
-        # 如果出錯，直接顯示具體錯誤訊息而非 Internal Server Error
-        return HTMLResponse(content=f"<h3>小蛋診斷錯誤：</h3><p>{str(e)}</p><p>路徑：{BASE_DIR}</p>", status_code=500)
+        return HTMLResponse(content=f"<h3>小蛋診斷錯誤：</h3><p>{str(e)}</p>", status_code=500)
 
 @app.post("/add")
 async def add_record(account_type: str = Form(...), amount: int = Form(...), 
