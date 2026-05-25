@@ -39,15 +39,18 @@ async def index(request: Request, type: str = "personal"):
         total = res[0] if res and res[0] else 0
         conn.close()
         
-        # 修正語法：明確傳遞 context 字典
-        return templates.TemplateResponse("index.html", {
-            "request": request, 
-            "current_type": type, 
-            "records": records, 
+        # 使用最原始的 context 建構方式，確保不論 FastAPI 版本都能跑
+        context = {
+            "request": request,
+            "current_type": type,
+            "records": records,
             "total": total
-        })
+        }
+        return templates.TemplateResponse("index.html", context)
     except Exception as e:
-        return HTMLResponse(content=f"<h3>小蛋診斷錯誤：</h3><p>{str(e)}</p>", status_code=500)
+        import traceback
+        error_msg = traceback.format_exc()
+        return HTMLResponse(content=f"<h3>小蛋診斷錯誤：</h3><pre>{error_msg}</pre>", status_code=500)
 
 @app.post("/add")
 async def add_record(account_type: str = Form(...), amount: int = Form(...), 
