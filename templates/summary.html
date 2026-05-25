@@ -18,7 +18,7 @@
 </head>
 <body class="pb-5">
     <div class="header-summary text-center">
-        <h5 class="fw-bold opacity-75">全域總支出</h5>
+        <h5 class="fw-bold opacity-75">當前總資產</h5>
         <h1 class="display-4 fw-bold mt-2">$ {{ grand_total }}</h1>
     </div>
 
@@ -59,7 +59,7 @@
                 </span>
                 <div class="fw-bold mt-1 text-dark">{{ record.category }}</div>
             </div>
-            <div class="text-danger fw-bold">-$ {{ record.amount }}</div>
+            <div class="fw-bold {{ "income-text" if record.entry_type == "income" else "expense-text" }}">-$ {{ record.amount }}</div>
         </div>
         {% endfor %}
     </div>
