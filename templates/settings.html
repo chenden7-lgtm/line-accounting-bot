@@ -44,13 +44,6 @@
     </div>
 
     <!-- 終極 6 鍵導覽列元件 -->
-    <div class="nav-bar-stable">
-        <a href="/" class="nav-item-new"><span>📊</span><small>總覽</small></a>
-        <a href="/?type=personal" class="nav-item-new"><span>🏠</span><small>私人</small></a>
-        <a href="/?type=company" class="nav-item-new"><span>🏢</span><small>公司</small></a>
-        <a href="/?type=invest" class="nav-item-new"><span>💰</span><small>投資</small></a>
-        <a href="/?type=report" class="nav-item-new"><span>📈</span><small>報表</small></a>
-        <a href="/?type=settings" class="nav-item-new active"><span>⚙️</span><small>設定</small></a>
-    </div>
+    <div class="nav-bar-stable">     <a href="/" class="nav-item-new {{ "active" if current_type == "summary" }}"><span>📊</span><small>總覽</small></a>     <a href="/?type=personal" class="nav-item-new {{ "active" if current_type == "personal" }}"><span>🏠</span><small>{{ names.personal[:2] }}</small></a>     <a href="/?type=company" class="nav-item-new {{ "active" if current_type == "company" }}"><span>🏢</span><small>{{ names.company[:2] }}</small></a>     <a href="/?type=invest" class="nav-item-new {{ "active" if current_type == "invest" }}"><span>💰</span><small>{{ names.invest[:2] }}</small></a>     <a href="/?type=report" class="nav-item-new {{ "active" if current_type == "report" }}"><span>📈</span><small>報表</small></a>     <a href="/?type=settings" class="nav-item-new {{ "active" if current_type == "settings" }}"><span>⚙️</span><small>設定</small></a> </div>
 </body>
 </html>
