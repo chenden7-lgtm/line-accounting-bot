@@ -3,80 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>滷蛋專屬記帳 v3.1</title>
+    <title>滷蛋記帳：{% if current_type == 'personal' %}私人{% elif current_type == 'company' %}公司{% else %}投資{% endif %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --primary-color: #ff5722; --bg-color: #f8f9fa; }
-        body { background-color: var(--bg-color); font-family: sans-serif; }
-        .header-section { background: linear-gradient(135deg, #ff5722 0%, #ff9800 100%); color: white; padding: 30px 20px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .card { border: none; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: -20px; }
-        .nav-pills { background-color: white; border-radius: 15px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .nav-pills .nav-link { border-radius: 12px; color: #666; font-size: 0.9rem; padding: 8px 5px; }
-        .nav-pills .nav-link.active { background-color: var(--primary-color) !important; color: white !important; }
-        .btn-submit { background-color: #333; color: white; border-radius: 12px; border: none; width: 100%; padding: 12px; font-weight: bold; }
-        .amount-text { color: #ff5722; font-weight: bold; font-size: 1.1rem; }
-        .tab-icon { margin-right: 4px; }
+        :root { --primary-color: #ff5722; }
+        body { background-color: #f8f9fa; }
+        .nav-bar { background: white; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); position: fixed; bottom: 0; width: 100%; z-index: 100; }
+        .nav-btn { color: #888; text-decoration: none; font-size: 0.7rem; text-align: center; flex: 1; }
+        .nav-btn.active { color: var(--primary-color); font-weight: bold; }
+        .header { background: linear-gradient(135deg, #ff5722 0%, #ff9800 100%); color: white; padding: 25px 20px 45px; border-radius: 0 0 30px 30px; }
+        .card-main { border: none; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: -30px; background: white; }
+        .btn-add { background: #333; color: white; width: 100%; border-radius: 12px; padding: 10px; border: none; font-weight: bold; }
+        .del-btn { color: #ccc; border: none; background: none; font-size: 1rem; }
     </style>
 </head>
-<body>
-    <div class="header-section text-center">
-        <h3 class="fw-bold">🥚 滷蛋專屬記帳 v3.1</h3>
-        <p class="opacity-75 small">
-            {% if current_type == 'personal' %}🏠 私人私帳{% elif current_type == 'company' %}🏢 公司公帳{% else %}💰 投資理財{% endif %}
-        </p>
-        <h2 class="mt-2 fw-bold">$ {{ total }}</h2>
+<body class="pb-5">
+    <div class="header text-center">
+        <h5 class="fw-bold mb-0">{% if current_type == 'personal' %}🏠 私人帳本{% elif current_type == 'company' %}🏢 公司公帳{% else %}💰 投資理財{% endif %}</h5>
+        <h1 class="display-5 fw-bold mt-2">$ {{ total }}</h1>
     </div>
 
-    <div class="container mb-5">
-        <ul class="nav nav-pills nav-fill mx-auto mb-4 mt-3">
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if current_type == 'personal' }}" href="/?type=personal">🏠 私人</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if current_type == 'company' }}" href="/?type=company">🏢 公司</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if current_type == 'invest' }}" href="/?type=invest">💰 投資</a>
-            </li>
-        </ul>
-
-        <div class="card p-4 mb-4">
-            <h6 class="fw-bold mb-3 text-muted">📍 新增歷史紀錄</h6>
+    <div class="container mt-0">
+        <div class="card-main p-4 mb-4">
             <form action="/add" method="POST">
                 <input type="hidden" name="account_type" value="{{ current_type }}">
                 <div class="row g-2">
                     <div class="col-6">
-                        <label class="small text-muted">金額</label>
-                        <input type="number" name="amount" class="form-control" placeholder="0" required inputmode="numeric">
+                        <input type="number" name="amount" class="form-control" placeholder="金額" required inputmode="numeric">
                     </div>
                     <div class="col-6">
-                        <label class="small text-muted">項目</label>
-                        <input type="text" name="category" class="form-control" placeholder="如: 股票" required>
+                        <input type="text" name="category" class="form-control" placeholder="項目" required>
                     </div>
                     <div class="col-12 mt-3">
-                        <button type="submit" class="btn-submit">存入 {{ '投資' if current_type == 'invest' else ('公司' if current_type == 'company' else '私人') }}帳本</button>
+                        <button type="submit" class="btn-add">存入一筆紀錄</button>
                     </div>
                 </div>
             </form>
         </div>
 
-        <div class="card p-3">
-            <h6 class="fw-bold mb-3">最近 {{ '投資' if current_type == 'invest' else ('公司' if current_type == 'company' else '私人') }}支出</h6>
-            <div class="list-group list-group-flush">
-                {% if not records %}
-                <div class="text-center py-4 text-muted small">目前尚無紀錄</div>
-                {% endif %}
-                {% for record in records %}
-                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                    <div>
-                        <div class="fw-bold text-dark">{{ record.category }}</div>
-                        <small class="text-muted" style="font-size: 0.7rem;">{{ record.created_at }}</small>
-                    </div>
-                    <div class="amount-text">-$ {{ record.amount }}</div>
+        <div class="px-2">
+            <h6 class="fw-bold mb-3 text-secondary">歷史清單</h6>
+            {% for record in records %}
+            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-white rounded-3 shadow-sm">
+                <div>
+                    <div class="fw-bold">{{ record.category }}</div>
+                    <small class="text-muted" style="font-size: 0.65rem;">{{ record.created_at }}</small>
                 </div>
-                {% endfor %}
+                <div class="d-flex align-items-center">
+                    <span class="text-danger fw-bold me-3">-$ {{ record.amount }}</span>
+                    <form action="/delete/{{ record.id }}?type={{ current_type }}" method="POST" onsubmit="return confirm('確定要刪除嗎？')">
+                        <button type="submit" class="del-btn">×</button>
+                    </form>
+                </div>
             </div>
+            {% endfor %}
         </div>
+    </div>
+
+    <div class="nav-bar d-flex">
+        <a href="/" class="nav-btn">📊<br>總覽</a>
+        <a href="/?type=personal" class="nav-btn {{ 'active' if current_type == 'personal' }}">🏠<br>私人</a>
+        <a href="/?type=company" class="nav-btn {{ 'active' if current_type == 'company' }}">🏢<br>公司</a>
+        <a href="/?type=invest" class="nav-btn {{ 'active' if current_type == 'invest' }}">💰<br>投資</a>
     </div>
 </body>
 </html>
