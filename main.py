@@ -6,8 +6,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
-DB_PATH = "accounting.db"
+
+# 強制獲取當前檔案所在目錄，確保路徑正確
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+DB_PATH = os.path.join(BASE_DIR, "accounting.db")
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -26,21 +29,25 @@ init_db()
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, type: str = "personal"):
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    c.execute("SELECT * FROM records WHERE account_type = ? ORDER BY created_at DESC LIMIT 50", (type,))
-    records = c.fetchall()
-    c.execute("SELECT SUM(amount) FROM records WHERE account_type = ?", (type,))
-    res = c.fetchone()
-    total = res[0] if res and res[0] else 0
-    conn.close()
-    return templates.TemplateResponse("index.html", {
-        "request": request, 
-        "current_type": type, 
-        "records": records, 
-        "total": total
-    })
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM records WHERE account_type = ? ORDER BY created_at DESC LIMIT 50", (type,))
+        records = c.fetchall()
+        c.execute("SELECT SUM(amount) FROM records WHERE account_type = ?", (type,))
+        res = c.fetchone()
+        total = res[0] if res and res[0] else 0
+        conn.close()
+        return templates.TemplateResponse("index.html", {
+            "request": request, 
+            "current_type": type, 
+            "records": records, 
+            "total": total
+        })
+    except Exception as e:
+        # 如果出錯，直接顯示具體錯誤訊息而非 Internal Server Error
+        return HTMLResponse(content=f"<h3>小蛋診斷錯誤：</h3><p>{str(e)}</p><p>路徑：{BASE_DIR}</p>", status_code=500)
 
 @app.post("/add")
 async def add_record(account_type: str = Form(...), amount: int = Form(...), 
