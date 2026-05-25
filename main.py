@@ -32,21 +32,17 @@ def init_db():
 
 init_db()
 
-def get_settings():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT value FROM settings WHERE key='names'")
-    res = c.fetchone()
-    conn.close()
-    return json.loads(res['value']) if res else {'personal': '私人私帳', 'company': '公司公帳', 'invest': '投資理財'}
-
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, type: str = "summary"):
     conn = get_db()
     c = conn.cursor()
-    names = get_settings()
     
-    # 基礎資產統計
+    # 獲取帳本名稱設定
+    c.execute("SELECT value FROM settings WHERE key='names'")
+    res = c.fetchone()
+    names = json.loads(res['value']) if res else {'personal': '私人私帳', 'company': '公司公帳', 'invest': '投資理財'}
+    
+    # 全域資產統計
     c.execute("""SELECT account_type, 
                  SUM(CASE WHEN entry_type = 'income' THEN amount ELSE 0 END) as inc,
                  SUM(CASE WHEN entry_type = 'expense' THEN amount ELSE 0 END) as exp
@@ -55,13 +51,14 @@ async def index(request: Request, type: str = "summary"):
     grand_total = sum(balance_map.values())
     
     if type == "summary":
+        # 總覽：最近 15 筆動態
         c.execute("SELECT * FROM records ORDER BY created_at DESC LIMIT 15")
         records = c.fetchall()
         return templates.TemplateResponse(request, "summary.html", {
             "totals": balance_map, "grand_total": grand_total, "records": records, "names": names, "current_type": "summary"
         })
     elif type == "report":
-        # 報表頁面邏輯：分類統計、收支比例
+        # 報表
         c.execute("SELECT entry_type, SUM(amount) as s FROM records GROUP BY entry_type")
         flow = {row['entry_type']: row['s'] for row in c.fetchall()}
         c.execute("SELECT category, SUM(amount) as s FROM records WHERE entry_type='expense' GROUP BY category ORDER BY s DESC LIMIT 5")
@@ -72,7 +69,7 @@ async def index(request: Request, type: str = "summary"):
     elif type == "settings":
         return templates.TemplateResponse(request, "settings.html", {"names": names, "current_type": "settings"})
     else:
-        # 單一帳本
+        # 獨立帳本
         c.execute("SELECT category, SUM(amount) as s FROM records WHERE account_type = ? AND entry_type = 'expense' GROUP BY category ORDER BY s DESC", (type,))
         stats = c.fetchall()
         c.execute("SELECT * FROM records WHERE account_type = ? ORDER BY created_at DESC LIMIT 50", (type,))
