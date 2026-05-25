@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小蛋記帳 - 多帳本管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .nav-pills .nav-link { color: #6c757d; border-radius: 10px; margin: 0 5px; }
+        .nav-pills .nav-link.active { background-color: #ffd43b; color: #333; font-weight: bold; }
+        .btn-warning { background-color: #ffd43b; border: none; font-weight: bold; }
+        .table-warning { background-color: #fff9db !important; }
+    </style>
+</head>
+<body class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0">🥚 {{ ledgers[current_type] }}</h2>
+        <a href="/analysis?type={{ current_type }}" class="btn btn-outline-dark btn-sm rounded-pill">📊 查看分析</a>
+    </div>
+
+    <!-- 帳本切換 -->
+    <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded-3 shadow-sm">
+        {% for key, name in ledgers.items() %}
+        <li class="nav-item">
+            <a class="nav-link {{ 'active' if current_type == key }}" href="/?type={{ key }}">{{ name }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- 快速記帳表單 -->
+    <div class="card p-4 mb-4">
+        <form action="/add" method="POST" class="row g-3">
+            <input type="hidden" name="account_type" value="{{ current_type }}">
+            <div class="col-md-3">
+                <input type="number" name="amount" class="form-control" placeholder="金額" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="category" class="form-control" placeholder="類別 (例: 飲食)" required>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="description" class="form-control" placeholder="備註">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-warning w-100">記一筆</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 支出清單 -->
+    <div class="card overflow-hidden">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">日期</th>
+                    <th>類別</th>
+                    <th>金額</th>
+                    <th class="pe-4">備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td class="ps-4 text-muted">{{ record.date }}</td>
+                    <td><span class="badge rounded-pill bg-light text-dark px-3">{{ record.category }}</span></td>
+                    <td class="fw-bold text-dark">${{ "{:,}".format(record.amount) }}</td>
+                    <td class="pe-4 italic text-muted">{{ record.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-warning">
+                <tr>
+                    <td colspan="2" class="text-end fw-bold ps-4">本月總計:</td>
+                    <td colspan="2" class="fw-bold text-dark pe-4">${{ "{:,}".format(total) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <p class="text-muted mt-5 text-center small">設計者：小蛋助手 🥚 | 給滷蛋的專屬工具</p>
+</body>
+</html>
