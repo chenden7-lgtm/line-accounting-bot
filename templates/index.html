@@ -19,11 +19,28 @@
 </head>
 <body class="pb-5">
     <div class="header text-center">
-        <h5 class="fw-bold mb-0">{% if current_type == 'personal' %}🏠 私人帳本{% elif current_type == 'company' %}🏢 公司公帳{% else %}💰 投資理財{% endif %}</h5>
+        <a href="/?type=settings" style="position: absolute; top: 15px; right: 20px; color: white; text-decoration: none;">⚙️</a>
+        <h5 class="fw-bold mb-0">{{ names.get(current_type) }}</h5>
         <h1 class="display-5 fw-bold mt-2">$ {{ total }}</h1>
     </div>
 
     <div class="container mt-0">
+        <div class="card p-3 mb-4 mt-3" style="border-radius: 20px;">
+            <h6 class="fw-bold mb-2 small text-secondary">📊 類別統計</h6>
+            <div class="container px-0">
+                {% for s in stats %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>{{ s.category }}</span>
+                        <span>${{ s.s }}</span>
+                    </div>
+                    <div class="progress" style="height: 6px; border-radius: 10px;">
+                        <div class="progress-bar bg-warning" style="width: {{ (s.s / total * 100) if total > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
         <div class="card-main p-4 mb-4">
             <form action="/add" method="POST">
                 <input type="hidden" name="account_type" value="{{ current_type }}">

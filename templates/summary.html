@@ -55,7 +55,7 @@
         <div class="d-flex justify-content-between p-2 bg-white rounded-3 shadow-sm mb-2 mx-1">
             <div class="small">
                 <span class="badge {{ 'bg-danger' if record.account_type == 'personal' else ('bg-primary' if record.account_type == 'company' else 'bg-success') }} opacity-75" style="font-size: 0.55rem;">
-                    {{ '私人' if record.account_type == 'personal' else ('公司' if record.account_type == 'company' else '投資') }}
+                    {{ names.get(record.account_type) }}
                 </span>
                 <div class="fw-bold mt-1 text-dark">{{ record.category }}</div>
             </div>
