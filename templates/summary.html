@@ -70,5 +70,22 @@
         <a href="/?type=company" class="nav-btn">🏢<br>公司</a>
         <a href="/?type=invest" class="nav-btn">💰<br>投資</a>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var ctx = document.getElementById("mainChart").getContext("2d");
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: [{% for k,v in names.items() %}"{{ v }}",{% endfor %}],
+                datasets: [{
+                    label: "結餘金額",
+                    data: [{% for k,v in names.items() %}{{ totals.get(k, 0) }},{% endfor %}],
+                    backgroundColor: "#ff5722",
+                    borderRadius: 10
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true, display: false }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+        });
+    </script>
 </body>
 </html>

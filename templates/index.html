@@ -113,5 +113,22 @@
             }
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var ctx = document.getElementById("categoryChart")?.getContext("2d");
+        if (ctx) {
+            new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: [{% for s in stats %}"{{ s.category }}",{% endfor %}],
+                    datasets: [{
+                        data: [{% for s in stats %}{{ s.s }},{% endfor %}],
+                        backgroundColor: ["#ff5722", "#4caf50", "#2196f3", "#ffc107", "#9c27b0", "#00bcd4"]
+                    }]
+                },
+                options: { plugins: { legend: { position: "right", labels: { boxWidth: 12, font: { size: 10 } } } } }
+            });
+        }
+    </script>
 </body>
 </html>

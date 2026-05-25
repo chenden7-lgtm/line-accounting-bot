@@ -66,7 +66,7 @@ async def index(request: Request, type: str = "summary"):
         c.execute("SELECT * FROM records ORDER BY created_at DESC LIMIT 15")
         records = c.fetchall()
         return templates.TemplateResponse(request, "summary.html", {
-            "totals": balance_map, "grand_total": grand_total, "records": records, "names": names, "current_type": "summary"
+            "totals": balance_map, "grand_total": grand_total, "records": records, "names": names, "current_type": "summary", "names": names
         })
     elif type == "settings":
         return templates.TemplateResponse(request, "settings.html", {"names": names, "current_type": "settings"})
