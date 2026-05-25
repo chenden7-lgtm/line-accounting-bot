@@ -19,7 +19,6 @@ def get_db():
 def init_db():
     conn = get_db()
     c = conn.cursor()
-    # 增加 entry_type 欄位 (預設為 expense)
     c.execute('''CREATE TABLE IF NOT EXISTS records
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   account_type TEXT, amount INTEGER, category TEXT, created_at TEXT,
@@ -28,13 +27,6 @@ def init_db():
                  (key TEXT PRIMARY KEY, value TEXT)''')
     c.execute("INSERT OR IGNORE INTO settings VALUES ('names', ?)", 
               (json.dumps({'personal': '私人私帳', 'company': '公司公帳', 'invest': '投資理財'}),))
-    
-    # 檢查是否需要升級資料表 (補上 entry_type)
-    try:
-        c.execute("SELECT entry_type FROM records LIMIT 1")
-    except:
-        c.execute("ALTER TABLE records ADD COLUMN entry_type TEXT DEFAULT 'expense'")
-        
     conn.commit()
     conn.close()
 
@@ -54,7 +46,7 @@ async def index(request: Request, type: str = "summary"):
     c = conn.cursor()
     names = get_settings()
     
-    # 計算結存：收入 - 支出
+    # 基礎資產統計
     c.execute("""SELECT account_type, 
                  SUM(CASE WHEN entry_type = 'income' THEN amount ELSE 0 END) as inc,
                  SUM(CASE WHEN entry_type = 'expense' THEN amount ELSE 0 END) as exp
@@ -66,19 +58,27 @@ async def index(request: Request, type: str = "summary"):
         c.execute("SELECT * FROM records ORDER BY created_at DESC LIMIT 15")
         records = c.fetchall()
         return templates.TemplateResponse(request, "summary.html", {
-            "totals": balance_map, "grand_total": grand_total, "records": records, "names": names, "current_type": "summary", "names": names
+            "totals": balance_map, "grand_total": grand_total, "records": records, "names": names, "current_type": "summary"
+        })
+    elif type == "report":
+        # 報表頁面邏輯：分類統計、收支比例
+        c.execute("SELECT entry_type, SUM(amount) as s FROM records GROUP BY entry_type")
+        flow = {row['entry_type']: row['s'] for row in c.fetchall()}
+        c.execute("SELECT category, SUM(amount) as s FROM records WHERE entry_type='expense' GROUP BY category ORDER BY s DESC LIMIT 5")
+        top_expenses = c.fetchall()
+        return templates.TemplateResponse(request, "report.html", {
+            "flow": flow, "top_expenses": top_expenses, "names": names, "current_type": "report"
         })
     elif type == "settings":
         return templates.TemplateResponse(request, "settings.html", {"names": names, "current_type": "settings"})
     else:
-        # 詳細帳本頁面
+        # 單一帳本
         c.execute("SELECT category, SUM(amount) as s FROM records WHERE account_type = ? AND entry_type = 'expense' GROUP BY category ORDER BY s DESC", (type,))
         stats = c.fetchall()
         c.execute("SELECT * FROM records WHERE account_type = ? ORDER BY created_at DESC LIMIT 50", (type,))
         records = c.fetchall()
-        current_balance = balance_map.get(type, 0)
         return templates.TemplateResponse(request, "index.html", {
-            "current_type": type, "records": records, "total": current_balance, "names": names, "stats": stats
+            "current_type": type, "records": records, "total": balance_map.get(type, 0), "names": names, "stats": stats
         })
 
 @app.post("/add")
