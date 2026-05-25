@@ -6,7 +6,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 DB_PATH = os.path.join(BASE_DIR, "accounting.db")
@@ -28,28 +27,21 @@ init_db()
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, type: str = "personal"):
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
-        c.execute("SELECT * FROM records WHERE account_type = ? ORDER BY created_at DESC LIMIT 50", (type,))
-        records = c.fetchall()
-        c.execute("SELECT SUM(amount) FROM records WHERE account_type = ?", (type,))
-        res = c.fetchone()
-        total = res[0] if res and res[0] else 0
-        conn.close()
-        
-        # 修正：針對最新版 FastAPI/Starlette，request 必須是第一個參數
-        context = {
-            "current_type": type,
-            "records": records,
-            "total": total
-        }
-        return templates.TemplateResponse(request, "index.html", context)
-    except Exception as e:
-        import traceback
-        error_msg = traceback.format_exc()
-        return HTMLResponse(content=f"<h3>小蛋診斷錯誤：</h3><pre>{error_msg}</pre>", status_code=500)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM records WHERE account_type = ? ORDER BY created_at DESC LIMIT 50", (type,))
+    records = c.fetchall()
+    c.execute("SELECT SUM(amount) FROM records WHERE account_type = ?", (type,))
+    res = c.fetchone()
+    total = res[0] if res and res[0] else 0
+    conn.close()
+    
+    return templates.TemplateResponse(request, "index.html", {
+        "current_type": type, 
+        "records": records, 
+        "total": total
+    })
 
 @app.post("/add")
 async def add_record(account_type: str = Form(...), amount: int = Form(...), 
